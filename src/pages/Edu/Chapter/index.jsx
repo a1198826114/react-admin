@@ -1,5 +1,16 @@
 import React, { Component } from "react";
-import { Button, message, Tooltip, Modal, Alert, Table } from "antd";
+import {
+  Button,
+  message,
+  Tooltip,
+  Alert,
+  Table,
+  Input,
+  Switch,
+  Modal,
+} from "antd";
+
+import { getSecChapterList } from "../Chapter/redux";
 import {
   FullscreenOutlined,
   RedoOutlined,
@@ -8,6 +19,7 @@ import {
   PlusOutlined,
   FormOutlined,
   DeleteOutlined,
+  ExclamationCircleOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 
@@ -15,11 +27,13 @@ import relativeTime from "dayjs/plugin/relativeTime";
 
 import { connect } from "react-redux";
 import SearchForm from "./SearchForm";
-
+import { delLessonList } from "@api/edu/lesson";
 import "./index.less";
 
-dayjs.extend(relativeTime);
+import { chapterList } from "./redux";
 
+dayjs.extend(relativeTime);
+const { confirm } = Modal;
 @connect(
   (state) => ({
     // courseList: state.courseList
@@ -27,8 +41,10 @@ dayjs.extend(relativeTime);
     //   state.course.permissionValueList,
     //   "Course"
     // )
-  })
+    chapterList: state.chapterList,
+  }),
   // { getcourseList }
+  { getSecChapterList }
 )
 class Chapter extends Component {
   state = {
@@ -36,6 +52,9 @@ class Chapter extends Component {
     previewVisible: false,
     previewImage: "",
     selectedRowKeys: [],
+    lessonId: "",
+    lessonTitle: "",
+    lessonFree: "",
   };
 
   showImgModal = (img) => {
@@ -90,19 +109,93 @@ class Chapter extends Component {
     });
   };
 
+  //点击加号进行展开
+  handelClickExpand = (expanded, record) => {
+    console.log(record);
+    if (expanded) {
+      this.props.getSecChapterList(record._id);
+    }
+  };
+  //点击更新数据
+  handleUpdate = (value) => () => {
+    // console.log(value);
+    this.setState({
+      lessonId: value._id,
+      lessonTitle: value.title,
+      lessonFree: value.free,
+    });
+  };
+
+  handelChangeValue = (e) => {
+    this.setState({
+      lessonTitle: e.target.value,
+    });
+  };
+
+  handelChangeFree = (checked) => {
+    this.setState({
+      lessonFree: checked,
+    });
+  };
+  handelCancel = () => {
+    this.setState({
+      lessonId: "",
+      lessonTitle: "",
+    });
+  };
+
+  //点击进行单个删除
+  handelDel = (data) => () => {
+    confirm({
+      title: "你确定要删除嘛?",
+      icon: <ExclamationCircleOutlined />,
+      okText: "是的",
+      okType: "danger",
+      cancelText: "不是",
+      onOk: () => {
+        delLessonList(data._id);
+        // console.log(data);
+        this.props.getSecChapterList(data.chapterId);
+      },
+    });
+  };
   render() {
     const { previewVisible, previewImage, selectedRowKeys } = this.state;
 
     const columns = [
       {
         title: "章节名称",
-        dataIndex: "title",
+        // dataIndex: "",
+        render: (value) => {
+          if (value._id === this.state.lessonId) {
+            return (
+              <Input
+                style={{ width: "300px" }}
+                value={this.state.lessonTitle}
+                onChange={this.handelChangeValue}
+              ></Input>
+            );
+          } else {
+            return <span>{value.title}</span>;
+          }
+        },
       },
       {
         title: "是否免费",
-        dataIndex: "free",
-        render: (isFree) => {
-          return isFree === true ? "是" : isFree === false ? "否" : "";
+        // dataIndex: "free",
+        render: (value) => {
+          if (value._id === this.state.lessonId) {
+            return (
+              <Switch
+                checkedChildren="是"
+                unCheckedChildren="否"
+                checked={this.state.lessonFree}
+                onChange={this.handelChangeFree}
+              ></Switch>
+            );
+          }
+          return value.free === true ? "是" : value.free === false ? "否" : "";
+          // return <Input></Input>;
         },
       },
       {
@@ -110,7 +203,20 @@ class Chapter extends Component {
         width: 300,
         fixed: "right",
         render: (data) => {
+          // console.log(data);
           if ("free" in data) {
+            if (data._id === this.state.lessonId) {
+              return (
+                <>
+                  <Button type="primary" style={{ margin: "0 10px" }}>
+                    确认
+                  </Button>
+                  <Button type="danger" onClick={this.handelCancel}>
+                    取消
+                  </Button>
+                </>
+              );
+            }
             return (
               <div>
                 <Tooltip title="查看详情">
@@ -119,12 +225,16 @@ class Chapter extends Component {
                   </Button>
                 </Tooltip>
                 <Tooltip title="更新章节">
-                  <Button type="primary" style={{ margin: "0 10px" }}>
+                  <Button
+                    type="primary"
+                    style={{ margin: "0 10px" }}
+                    onClick={this.handleUpdate(data)}
+                  >
                     <FormOutlined />
                   </Button>
                 </Tooltip>
                 <Tooltip title="删除章节">
-                  <Button type="danger">
+                  <Button type="danger" onClick={this.handelDel(data)}>
                     <DeleteOutlined />
                   </Button>
                 </Tooltip>
@@ -134,82 +244,6 @@ class Chapter extends Component {
         },
       },
     ];
-
-    const data = [
-      {
-        id: "111",
-        title: "第一章节",
-        children: [
-          {
-            id: "1",
-            title: "第一课时",
-            free: false,
-            videoSourceId: "756cf06db9cb4f30be85a9758b19c645",
-          },
-          {
-            id: "2",
-            title: "第二课时",
-            free: true,
-            videoSourceId: "2a02d726622f4c7089d44cb993c531e1",
-          },
-          {
-            id: "3",
-            title: "第三课时",
-            free: true,
-            videoSourceId: "4e560c892fdf4fa2b42e0671aa42fa9d",
-          },
-        ],
-      },
-      {
-        id: "222",
-        title: "第二章节",
-        children: [
-          {
-            id: "4",
-            title: "第一课时",
-            free: false,
-            videoSourceId: "756cf06db9cb4f30be85a9758b19c645",
-          },
-          {
-            id: "5",
-            title: "第二课时",
-            free: true,
-            videoSourceId: "2a02d726622f4c7089d44cb993c531e1",
-          },
-          {
-            id: "6",
-            title: "第三课时",
-            free: true,
-            videoSourceId: "4e560c892fdf4fa2b42e0671aa42fa9d",
-          },
-        ],
-      },
-      {
-        id: "333",
-        title: "第三章节",
-        children: [
-          {
-            id: "1192252824606289921",
-            title: "第一课时",
-            free: false,
-            videoSourceId: "756cf06db9cb4f30be85a9758b19c645",
-          },
-          {
-            id: "1192628092797730818",
-            title: "第二课时",
-            free: true,
-            videoSourceId: "2a02d726622f4c7089d44cb993c531e1",
-          },
-          {
-            id: "1192632495013380097",
-            title: "第三课时",
-            free: true,
-            videoSourceId: "4e560c892fdf4fa2b42e0671aa42fa9d",
-          },
-        ],
-      },
-    ];
-
     const rowSelection = {
       selectedRowKeys,
       onChange: this.onSelectChange,
@@ -288,10 +322,11 @@ class Chapter extends Component {
             style={{ marginBottom: 20 }}
           />
           <Table
+            expandable={{ onExpand: this.handelClickExpand }}
             rowSelection={rowSelection}
             columns={columns}
-            dataSource={data}
-            rowKey="id"
+            dataSource={this.props.chapterList.items}
+            rowKey="_id"
           />
         </div>
 

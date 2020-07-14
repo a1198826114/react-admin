@@ -1,0 +1,2 @@
+export const GET_CHAPTERLIST = "GET_CHAPTERLIST";
+export const GET_SECCHAPTER = "GET_SECCHAPTER";
