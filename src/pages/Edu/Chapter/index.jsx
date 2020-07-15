@@ -111,8 +111,9 @@ class Chapter extends Component {
 
   //点击加号进行展开
   handelClickExpand = (expanded, record) => {
-    console.log(record);
+    // console.log(record);
     if (expanded) {
+      console.log(record);
       this.props.getSecChapterList(record._id);
     }
   };
@@ -154,9 +155,16 @@ class Chapter extends Component {
       cancelText: "不是",
       onOk: () => {
         delLessonList(data._id);
-        // console.log(data);
+        console.log(data);
         this.props.getSecChapterList(data.chapterId);
       },
+    });
+  };
+  //点击添加新增课时
+  handleLesson = (data) => () => {
+    console.log(data);
+    this.props.history.push("/edu/chapter/addlesson", {
+      chapterId: data.chapterId,
     });
   };
   render() {
@@ -219,9 +227,9 @@ class Chapter extends Component {
             }
             return (
               <div>
-                <Tooltip title="查看详情">
-                  <Button>
-                    <SettingOutlined />
+                <Tooltip title="新增课时">
+                  <Button type="primary" onClick={this.handleLesson(data)}>
+                    <PlusOutlined />
                   </Button>
                 </Tooltip>
                 <Tooltip title="更新章节">

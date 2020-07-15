@@ -10,7 +10,6 @@ function getChapterListSync(data) {
 export function getChapterList({ page, limit, courseId }) {
   return (dispatch) => {
     reqGetCourseList({ page, limit, courseId }).then((res) => {
-      console.log(111);
       dispatch(getChapterListSync(res));
     });
   };

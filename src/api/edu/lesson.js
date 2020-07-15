@@ -25,3 +25,19 @@ export function delLessonList(lessonId) {
     method: "DELETE",
   });
 }
+
+export function getToken() {
+  return request({
+    url: "/uploadtoken",
+    method: "GET",
+  });
+}
+
+//新增课时
+export function addLesson({ chapterId, title, free, video }) {
+  return request({
+    url: `${BASE_URL}/save/`,
+    method: "POST",
+    data: { chapterId, title, free, video },
+  });
+}
